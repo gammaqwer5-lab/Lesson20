@@ -18,40 +18,35 @@ var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
  
 try
 {
-    Console.Write("Минимальный возраст: ");
-    int minAge = int.Parse(Console.ReadLine()!);
+    int count = await db.Students.CountAsync();
+    double averageAge = await db.Students.AverageAsync(s => s.Age);
+    int minAge = await db.Students.MinAsync(s => s.Age);
+    int maxAge = await db.Students.MaxAsync(s => s.Age);
 
-    Console.Write("Максимальный возраст: ");
-    int maxAge = int.Parse(Console.ReadLine()!);
+    bool allAdults = await db.Students
+    .AllAsync(s => s.Age >= 18);
 
-    Console.Write("Номер страницы: ");
-    int page = int.Parse(Console.ReadLine()!);
-
-    const int pageSize = 3;
-
-    var students = await db.Students
-    .Select(s => new {
-        s.FirstName,
-        s.LastName,
-        s.Age
+    var statistics = await db.Students
+    .GroupBy(s => s.Age)
+    .Select(g => new
+    {
+        Age = g.Key,
+        Count = g.Count()
     })
-    .Where(s => s.Age >= minAge && s.Age <= maxAge)
-    .OrderBy(s => s.LastName)
-    .ThenBy(s => s.FirstName)
-    .Skip((page - 1) * pageSize)
-    .Take(pageSize)
+    .OrderBy(x => x.Age)
     .ToListAsync();
 
-    Console.WriteLine("\nрезультат поиска\n");
-
-    foreach (var student in students)
+    Console.WriteLine($"\nВсего студентов: {count}");
+    Console.WriteLine($"Средний возраст: {averageAge}");
+    Console.WriteLine($"Минимальный возраст: {minAge}");
+    Console.WriteLine($"Максимальный возраст: {maxAge}");
+    Console.WriteLine("Распределение по возрасту:");
+    foreach (var stat in statistics)
     {
-        Console.WriteLine($"{student.FirstName} {student.LastName} {student.Age}");
+        Console.WriteLine($"{stat.Age} лет - {stat.Count}");
     }
 
-    var hasMinors = await db.Students.AnyAsync(s => s.Age < 18);
-
-    Console.WriteLine($"\nесть несовершеннолетние студенты: {hasMinors}\n");
+    Console.WriteLine($"Все студенты совершеннолетние: {allAdults}");
 }
 catch (Exception ex)
 {
