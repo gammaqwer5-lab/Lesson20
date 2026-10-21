@@ -15,7 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 using var host = builder.Build();
 using var scope = host.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
+ 
 try
 {
     Console.Write("Минимальный возраст: ");
